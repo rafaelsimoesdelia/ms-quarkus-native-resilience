@@ -1,0 +1,183 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+	xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 https://maven.apache.org/xsd/maven-4.0.0.xsd">
+	<modelVersion>4.0.0</modelVersion>
+
+	<groupId>com.ignis.api</groupId>
+	<artifactId>ms-quarkus-native-resilience</artifactId>
+	<version>1.0.0-SNAPSHOT</version>
+
+	<!-- Propriedades globais do projeto -->
+	<properties>
+		<!-- Versões dos plugins utilizados -->
+		<build-helper-maven-plugin.version>3.0.0</build-helper-maven-plugin.version>
+		<compiler-plugin.version>3.11.0</compiler-plugin.version>
+		<surefire-plugin.version>3.1.2</surefire-plugin.version>
+
+		<!-- Configuração do compilador -->
+		<maven.compiler.parameters>true</maven.compiler.parameters>
+		<maven.compiler.source>21</maven.compiler.source>
+		<maven.compiler.target>21</maven.compiler.target>
+
+
+		<!-- Encoding padrão do projeto -->
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<!-- Versão e artefato do Quarkus -->
+		<quarkus.platform.artifact-id>quarkus-bom</quarkus.platform.artifact-id>
+		<quarkus.platform.group-id>io.quarkus.platform</quarkus.platform.group-id>
+		<quarkus.platform.version>3.18.1</quarkus.platform.version>
+	</properties>
+
+	<!-- Gerenciamento de dependências -->
+	<dependencyManagement>
+		<dependencies>
+			<dependency>
+				<groupId>${quarkus.platform.group-id}</groupId>
+				<artifactId>${quarkus.platform.artifact-id}</artifactId>
+				<version>${quarkus.platform.version}</version>
+				<type>pom</type>
+				<scope>import</scope>
+			</dependency>
+		</dependencies>
+	</dependencyManagement>
+
+	<dependencies>
+		<!-- Suporte a REST com JSON (JAX-RS + Jackson) -->
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-resteasy-jackson</artifactId>
+		</dependency>
+
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-spring-data-jpa</artifactId>
+		</dependency>
+		<!-- Suporte à verificação de saúde (health check) para microserviços -->
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-smallrye-health</artifactId>
+		</dependency>
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-jdbc-postgresql</artifactId>
+		</dependency>
+
+		<!-- Resiliência -->
+		<!-- Suporte a falhas e tolerância a falhas com SmallRye Fault Tolerance -->
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-smallrye-fault-tolerance</artifactId>
+		</dependency>
+
+		<!-- Dependências para Testes -->
+		<!-- Suporte a testes unitários com JUnit5 no Quarkus -->
+		<dependency>
+			<groupId>io.quarkus</groupId>
+			<artifactId>quarkus-junit5</artifactId>
+			<scope>test</scope>
+		</dependency>
+		<!-- Testes de APIs REST usando Rest-Assured -->
+		<dependency>
+			<groupId>io.rest-assured</groupId>
+			<artifactId>rest-assured</artifactId>
+			<scope>test</scope>
+		</dependency>
+
+		<!-- Lombok: Geração automática de Getters, Setters, Equals, HashCode,
+		etc -->
+		<dependency>
+			<groupId>org.projectlombok</groupId>
+			<artifactId>lombok</artifactId>
+			<version>1.18.36</version>
+			<scope>provided</scope>
+		</dependency>
+
+		<!-- MapStruct: Mapeamento automático entre DTOs e Entidades -->
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct</artifactId>
+			<version>1.6.3</version>
+		</dependency>
+		<dependency>
+			<groupId>org.mapstruct</groupId>
+			<artifactId>mapstruct-processor</artifactId>
+			<version>1.6.3</version>
+			<scope>provided</scope>
+		</dependency>
+	</dependencies>
+
+	<!-- Configuração do Build -->
+	<build>
+		<finalName>${project.artifactId}</finalName>
+		<plugins>
+			<!-- Plugin do Maven para compilar o código-fonte -->
+			<plugin>
+				<artifactId>maven-compiler-plugin</artifactId>
+				<version>${compiler-plugin.version}</version>
+			</plugin>
+
+			<!-- Plugin para rodar testes unitários com JUnit -->
+			<plugin>
+				<artifactId>maven-surefire-plugin</artifactId>
+				<version>${surefire-plugin.version}</version>
+			</plugin>
+
+			<!-- Plugin do Quarkus para build e geração do código -->
+			<plugin>
+				<groupId>${quarkus.platform.group-id}</groupId>
+				<artifactId>quarkus-maven-plugin</artifactId>
+				<version>${quarkus.platform.version}</version>
+				<executions>
+					<execution>
+						<goals>
+							<goal>build</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+
+			<!-- Plugin para auxiliar na manipulação de arquivos no build -->
+			<plugin>
+				<groupId>org.codehaus.mojo</groupId>
+				<artifactId>build-helper-maven-plugin</artifactId>
+				<version>${build-helper-maven-plugin.version}</version>
+			</plugin>
+		</plugins>
+	</build>
+
+	<!-- Configuração do Profile para Native Image -->
+	<profiles>
+		<profile>
+			<id>native</id>
+			<activation>
+				<property>
+					<name>native</name>
+				</property>
+			</activation>
+			<properties>
+				<!-- Habilita a geração de binários nativos -->
+				<quarkus.native.enabled>true</quarkus.native.enabled>
+				<quarkus.package.jar.enabled>false</quarkus.package.jar.enabled>
+			</properties>
+			<build>
+				<plugins>
+					<!-- Plugin para rodar testes de integração -->
+					<plugin>
+						<artifactId>maven-failsafe-plugin</artifactId>
+						<version>${surefire-plugin.version}</version>
+						<executions>
+							<execution>
+								<goals>
+									<goal>integration-test</goal>
+									<goal>verify</goal>
+								</goals>
+							</execution>
+						</executions>
+					</plugin>
+				</plugins>
+			</build>
+		</profile>
+	</profiles>
+</project>
